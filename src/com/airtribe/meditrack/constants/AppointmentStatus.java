@@ -1,4 +1,7 @@
 package com.airtribe.meditrack.constants;
 
-public class AppointmentStatus {
+public enum AppointmentStatus {
+    PENDING,
+    CONFIRMED,
+    CANCELLED
 }
