@@ -2,8 +2,10 @@ package com.airtribe.meditrack;
 
 import com.airtribe.meditrack.constants.Specialization;
 import com.airtribe.meditrack.entity.Doctor;
+import com.airtribe.meditrack.entity.Patient;
 import com.airtribe.meditrack.exception.DoctorNotFoundException;
 import com.airtribe.meditrack.service.DoctorService;
+import com.airtribe.meditrack.service.PatientService;
 import com.airtribe.meditrack.util.DataStore;
 
 import java.util.List;
@@ -24,6 +26,12 @@ public class Main {
     private static final DoctorService doctorService =
             new DoctorService(doctorStore);
 
+    private static final DataStore<Patient> patientStore =
+            new DataStore<>();
+
+    private static final PatientService patientService =
+            new PatientService(patientStore);
+
     public static void main(String[] args) {
 
         boolean running = true;
@@ -41,7 +49,7 @@ public class Main {
                     break;
 
                 case 2:
-
+                    patientMenu();
                     break;
 
                 case 3:
@@ -470,6 +478,350 @@ public class Main {
         System.out.println("Specialization: " + doctor.getSpecialization());
         System.out.println("Consultation Fee: ₹" + doctor.getConsultationFee());
         System.out.println("Available: " + doctor.isAvailable());
+        System.out.println("-----------------------------");
+    }
+
+    // ============================================================
+    // PATIENT MANAGEMENT
+    // ============================================================
+
+    /**
+     * Displays the Patient management menu.
+     */
+    private static void patientMenu() {
+
+        boolean running = true;
+
+        while (running) {
+
+            System.out.println();
+            System.out.println("=================================");
+            System.out.println("       PATIENT MANAGEMENT");
+            System.out.println("=================================");
+            System.out.println("1. Add Patient");
+            System.out.println("2. Get All Patients");
+            System.out.println("3. Update Patient");
+            System.out.println("4. Delete Patient");
+            System.out.println("5. Search Patient By ID");
+            System.out.println("6. Search Patient By Name");
+            System.out.println("7. Search Patient By Age");
+            System.out.println("8. Back");
+            System.out.println("=================================");
+
+            int choice = readInt("Enter your choice: ");
+
+            switch (choice) {
+
+                case 1:
+                    addPatient();
+                    break;
+
+                case 2:
+                    getAllPatients();
+                    break;
+
+                case 3:
+                    updatePatient();
+                    break;
+
+                case 4:
+                    deletePatient();
+                    break;
+
+                case 5:
+                    searchPatientById();
+                    break;
+
+                case 6:
+                    searchPatientByName();
+                    break;
+
+                case 7:
+                    searchPatientByAge();
+                    break;
+
+                case 8:
+                    running = false;
+                    break;
+
+                default:
+                    System.out.println(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    /**
+     * Adds a new Patient using console input.
+     */
+    private static void addPatient() {
+
+        System.out.println("\n--- ADD PATIENT ---");
+
+        long id = readLong("Enter patient ID: ");
+
+        System.out.print("Enter name: ");
+        String name = scanner.nextLine();
+
+        int age = readInt("Enter age: ");
+
+        System.out.print("Enter phone: ");
+        String phone = scanner.nextLine();
+
+        System.out.print("Enter email: ");
+        String email = scanner.nextLine();
+
+        System.out.print("Enter blood group: ");
+        String bloodGroup = scanner.nextLine();
+
+        System.out.print("Enter medical history: ");
+        String medicalHistory = scanner.nextLine();
+
+        Patient patient = new Patient(
+                id,
+                name,
+                age,
+                phone,
+                email,
+                bloodGroup,
+                medicalHistory
+        );
+
+        try {
+
+            patientService.addPatient(patient);
+
+            System.out.println("Patient added successfully.");
+
+        } catch (RuntimeException e) {
+
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Displays all patients.
+     */
+    private static void getAllPatients() {
+
+        System.out.println("\n--- ALL PATIENTS ---");
+
+        List<Patient> patients =
+                patientService.getAllPatients();
+
+        if (patients.isEmpty()) {
+
+            System.out.println("No patients found.");
+            return;
+        }
+
+        for (Patient patient : patients) {
+            printPatient(patient);
+        }
+    }
+
+    /**
+     * Updates an existing Patient.
+     */
+    private static void updatePatient() {
+
+        System.out.println("\n--- UPDATE PATIENT ---");
+
+        long id = readLong("Enter patient ID: ");
+
+        try {
+
+            Patient patient =
+                    patientService.getPatientById(id);
+
+            System.out.println(
+                    "Current patient: " + patient.getName()
+            );
+
+            System.out.print("Enter new name: ");
+            String name = scanner.nextLine();
+
+            int age = readInt("Enter new age: ");
+
+            System.out.print("Enter new phone: ");
+            String phone = scanner.nextLine();
+
+            System.out.print("Enter new email: ");
+            String email = scanner.nextLine();
+
+            System.out.print("Enter new blood group: ");
+            String bloodGroup = scanner.nextLine();
+
+            System.out.print("Enter new medical history: ");
+            String medicalHistory = scanner.nextLine();
+
+            patient.setName(name);
+            patient.setAge(age);
+            patient.setPhone(phone);
+            patient.setEmail(email);
+            patient.setBloodGroup(bloodGroup);
+            patient.setMedicalHistory(medicalHistory);
+
+            patientService.updatePatient(patient);
+
+            System.out.println(
+                    "Patient updated successfully."
+            );
+
+        } catch (RuntimeException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Deletes a Patient by ID.
+     */
+    private static void deletePatient() {
+
+        System.out.println("\n--- DELETE PATIENT ---");
+
+        long id = readLong("Enter patient ID: ");
+
+        try {
+
+            patientService.deletePatient(id);
+
+            System.out.println(
+                    "Patient deleted successfully."
+            );
+
+        } catch (RuntimeException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Searches for a Patient by ID.
+     */
+    private static void searchPatientById() {
+
+        System.out.println(
+                "\n--- SEARCH PATIENT BY ID ---"
+        );
+
+        long id = readLong("Enter patient ID: ");
+
+        try {
+
+            Patient patient =
+                    patientService.searchPatient(id);
+
+            printPatient(patient);
+
+        } catch (RuntimeException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Searches Patients by name.
+     */
+    private static void searchPatientByName() {
+
+        System.out.println(
+                "\n--- SEARCH PATIENT BY NAME ---"
+        );
+
+        System.out.print("Enter name: ");
+        String name = scanner.nextLine();
+
+        try {
+
+            List<Patient> patients =
+                    patientService.searchPatient(name);
+
+            if (patients.isEmpty()) {
+
+                System.out.println(
+                        "No matching patients found."
+                );
+
+                return;
+            }
+
+            for (Patient patient : patients) {
+                printPatient(patient);
+            }
+
+        } catch (RuntimeException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Searches Patients by age.
+     */
+    private static void searchPatientByAge() {
+
+        System.out.println(
+                "\n--- SEARCH PATIENT BY AGE ---"
+        );
+
+        int age = readInt("Enter age: ");
+
+        try {
+
+            List<Patient> patients =
+                    patientService.searchPatient(age);
+
+            if (patients.isEmpty()) {
+
+                System.out.println(
+                        "No matching patients found."
+                );
+
+                return;
+            }
+
+            for (Patient patient : patients) {
+                printPatient(patient);
+            }
+
+        } catch (RuntimeException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Displays Patient information.
+     *
+     * @param patient patient to display
+     */
+    private static void printPatient(Patient patient) {
+
+        System.out.println("-----------------------------");
+        System.out.println("ID: " + patient.getId());
+        System.out.println("Name: " + patient.getName());
+        System.out.println("Age: " + patient.getAge());
+        System.out.println("Phone: " + patient.getPhone());
+        System.out.println("Email: " + patient.getEmail());
+        System.out.println(
+                "Blood Group: " + patient.getBloodGroup()
+        );
+        System.out.println(
+                "Medical History: " + patient.getMedicalHistory()
+        );
         System.out.println("-----------------------------");
     }
 

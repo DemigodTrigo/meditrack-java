@@ -12,5 +12,6 @@ public class TestRunner {
 
     public static void main(String[] args) {
         DoctorTest.run();
+        PatientTest.run();
     }
 }
