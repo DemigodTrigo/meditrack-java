@@ -1,14 +1,15 @@
 package com.airtribe.meditrack.entity;
 
-public class Person {
+import java.util.Objects;
+public class Person extends MedicalEntity {
 
     private long id;
     private String name;
     private int age;
     private String phone;
     private String email;
-
     public Person(long id, String name, int age, String phone, String email) {
+        super(String.valueOf(id));
         this.id = id;
         this.name = name;
         this.age = age;
@@ -54,5 +55,39 @@ public class Person {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Override
+    public String getEntityType() {
+        return "Person";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof Person)) {
+            return false;
+        }
+
+        Person other = (Person) obj;
+        return this.id == other.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
+    @Override
+    public String toString() {
+        return "Person{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", age=" + age +
+                ", phone='" + phone + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
 }
