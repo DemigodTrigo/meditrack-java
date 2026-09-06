@@ -1,4 +1,9 @@
 package com.airtribe.meditrack.constants;
 
-public class BillingType {
+public enum BillingType {
+
+    CONSULTATION,
+    MEDICINE,
+    LAB_TEST,
+    PROCEDURE
 }

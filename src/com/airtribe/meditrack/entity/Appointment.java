@@ -5,6 +5,7 @@ import com.airtribe.meditrack.constants.AppointmentStatus;
 import java.time.LocalDateTime;
 
 public class Appointment {
+
     private long appointmentId;
     private Doctor doctor;
     private Patient patient;
@@ -12,8 +13,13 @@ public class Appointment {
     private AppointmentStatus status;
     private String reason;
 
-    public Appointment(long appointmentId, Doctor doctor, Patient patient,
-                       LocalDateTime appointmentDateTime, AppointmentStatus status, String reason) {
+    public Appointment(long appointmentId,
+                       Doctor doctor,
+                       Patient patient,
+                       LocalDateTime appointmentDateTime,
+                       AppointmentStatus status,
+                       String reason) {
+
         this.appointmentId = appointmentId;
         this.doctor = doctor;
         this.patient = patient;
@@ -48,6 +54,14 @@ public class Appointment {
 
     public void setStatus(AppointmentStatus status) {
         this.status = status;
+    }
+
+    public void setAppointmentDateTime(LocalDateTime appointmentDateTime) {
+        this.appointmentDateTime = appointmentDateTime;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     @Override

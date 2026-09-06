@@ -1,30 +1,68 @@
 package com.airtribe.meditrack;
 
+import com.airtribe.meditrack.constants.AppointmentStatus;
+import com.airtribe.meditrack.constants.BillingType;
 import com.airtribe.meditrack.constants.Specialization;
+import com.airtribe.meditrack.entity.Appointment;
+import com.airtribe.meditrack.entity.Bill;
+import com.airtribe.meditrack.entity.BillSummary;
 import com.airtribe.meditrack.entity.Doctor;
-import com.airtribe.meditrack.exception.DoctorNotFoundException;
+import com.airtribe.meditrack.entity.Patient;
+import com.airtribe.meditrack.exception.InvalidDataException;
+import com.airtribe.meditrack.service.AppointmentService;
+import com.airtribe.meditrack.service.BillingService;
 import com.airtribe.meditrack.service.DoctorService;
+import com.airtribe.meditrack.service.PatientService;
 import com.airtribe.meditrack.util.DataStore;
+import com.airtribe.meditrack.util.DateUtil;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Entry point for the MediTrack console application.
- *
- * This class provides a command-line interface for managing doctors, patients, appointments, and billing within the MediTrack system.
- */
 public class Main {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner =
+            new Scanner(System.in);
 
     private static final DataStore<Doctor> doctorStore =
+            new DataStore<>();
+
+    private static final DataStore<Patient> patientStore =
+            new DataStore<>();
+
+    private static final DataStore<Appointment> appointmentStore =
+            new DataStore<>();
+
+    private static final DataStore<Bill> billStore =
             new DataStore<>();
 
     private static final DoctorService doctorService =
             new DoctorService(doctorStore);
 
+    private static final PatientService patientService =
+            new PatientService(patientStore);
+
+    private static final AppointmentService appointmentService =
+            new AppointmentService(
+                    appointmentStore,
+                    doctorService,
+                    patientService
+            );
+
+    private static final BillingService billingService =
+            new BillingService(
+                    billStore,
+                    appointmentService
+            );
+
     public static void main(String[] args) {
+
+        System.out.println();
+        System.out.println("==========================================");
+        System.out.println("              MEDI TRACK");
+        System.out.println("       Hospital Management System");
+        System.out.println("==========================================");
 
         boolean running = true;
 
@@ -34,166 +72,167 @@ public class Main {
 
             int choice = readInt("Enter your choice: ");
 
-            switch (choice) {
+            try {
 
-                case 1:
-                    doctorMenu();
-                    break;
+                switch (choice) {
 
-                case 2:
+                    case 1:
+                        doctorMenu();
+                        break;
 
-                    break;
+                    case 2:
+                        patientMenu();
+                        break;
 
-                case 3:
+                    case 3:
+                        appointmentMenu();
+                        break;
 
-                    break;
+                    case 4:
+                        billingMenu();
+                        break;
 
-                case 4:
+                    case 5:
+                        showDashboard();
+                        break;
 
-                    break;
+                    case 0:
+                        running = false;
+                        System.out.println(
+                                "\nThank you for using MediTrack."
+                        );
+                        break;
 
-                case 5:
-                    running = false;
-                    System.out.println("Exiting MediTrack...");
-                    break;
+                    default:
+                        System.out.println(
+                                "Invalid choice. Please try again."
+                        );
+                }
 
-                default:
-                    System.out.println(
-                            "Invalid choice. Please try again."
-                    );
+            } catch (Exception e) {
+
+                System.out.println(
+                        "\nOperation failed: " +
+                                e.getMessage()
+                );
             }
         }
 
         scanner.close();
     }
 
-    /**
-     * Displays the main MediTrack menu.
-     */
+    // =========================================================
+    // MAIN MENU
+    // =========================================================
+
     private static void printMainMenu() {
 
         System.out.println();
-        System.out.println("=================================");
-        System.out.println("          MEDI TRACK");
-        System.out.println("=================================");
+        System.out.println("------------------------------------------");
+        System.out.println("                MAIN MENU");
+        System.out.println("------------------------------------------");
         System.out.println("1. Doctor Management");
         System.out.println("2. Patient Management");
         System.out.println("3. Appointment Management");
-        System.out.println("4. Billing");
-        System.out.println("5. Exit");
-        System.out.println("=================================");
+        System.out.println("4. Billing Management");
+        System.out.println("5. Dashboard");
+        System.out.println("0. Exit");
+        System.out.println("------------------------------------------");
     }
 
-    /**
-     * Displays the Doctor management menu.
-     */
+    // =========================================================
+    // DOCTOR MENU
+    // =========================================================
+
     private static void doctorMenu() {
 
-        boolean running = true;
+        boolean back = false;
 
-        while (running) {
+        while (!back) {
 
             System.out.println();
-            System.out.println("=================================");
-            System.out.println("       DOCTOR MANAGEMENT");
-            System.out.println("=================================");
+            System.out.println("------------------------------------------");
+            System.out.println("           DOCTOR MANAGEMENT");
+            System.out.println("------------------------------------------");
             System.out.println("1. Add Doctor");
-            System.out.println("2. Get All Doctors");
-            System.out.println("3. Update Doctor");
-            System.out.println("4. Delete Doctor");
-            System.out.println("5. Search Doctor By ID");
-            System.out.println("6. Search Doctor By Name");
-            System.out.println("7. Search By Specialization");
-            System.out.println("8. Calculate Average Consultation Fee");
-            System.out.println("9. Find Highest Consultation Fee");
-            System.out.println("10. Appointment Analytics By Doctor");
-            System.out.println("11. Back");
-            System.out.println("=================================");
+            System.out.println("2. View Doctor");
+            System.out.println("3. View All Doctors");
+            System.out.println("4. Search Doctor");
+            System.out.println("5. Update Doctor");
+            System.out.println("6. Delete Doctor");
+            System.out.println("7. Doctor Statistics");
+            System.out.println("0. Back");
+            System.out.println("------------------------------------------");
 
             int choice = readInt("Enter your choice: ");
 
-            switch (choice) {
+            try {
 
-                case 1:
-                    addDoctor();
-                    break;
+                switch (choice) {
 
-                case 2:
-                    getAllDoctors();
-                    break;
+                    case 1:
+                        addDoctor();
+                        break;
 
-                case 3:
-                    updateDoctor();
-                    break;
+                    case 2:
+                        viewDoctor();
+                        break;
 
-                case 4:
-                    deleteDoctor();
-                    break;
+                    case 3:
+                        viewAllDoctors();
+                        break;
 
-                case 5:
-                    searchDoctorById();
-                    break;
+                    case 4:
+                        searchDoctor();
+                        break;
 
-                case 6:
-                    searchDoctorByName();
-                    break;
+                    case 5:
+                        updateDoctor();
+                        break;
 
-                case 7:
-                    searchBySpecialization();
-                    break;
+                    case 6:
+                        deleteDoctor();
+                        break;
 
-                case 8:
-                    calculateAverageFee();
-                    break;
+                    case 7:
+                        doctorStatistics();
+                        break;
 
-                case 9:
-                    findHighestFeeDoctor();
-                    break;
+                    case 0:
+                        back = true;
+                        break;
 
-                case 10:
-                    appointmentAnalytics();
-                    break;
+                    default:
+                        System.out.println(
+                                "Invalid choice."
+                        );
+                }
 
-                case 11:
-                    running = false;
-                    break;
+            } catch (Exception e) {
 
-                default:
-                    System.out.println(
-                            "Invalid choice. Please try again."
-                    );
+                System.out.println(
+                        "Operation failed: " +
+                                e.getMessage()
+                );
             }
         }
     }
 
-    private static void appointmentAnalytics() {
-    }
-
-    /**
-     * Adds a new Doctor using console input.
-     */
     private static void addDoctor() {
 
         System.out.println("\n--- ADD DOCTOR ---");
 
-        long id = readLong("Enter doctor ID: ");
+        long id = readLong("Doctor ID: ");
+        String name = readString("Name: ");
+        int age = readInt("Age: ");
+        String phone = readString("Phone: ");
+        String email = readString("Email: ");
 
-        System.out.print("Enter name: ");
-        String name = scanner.nextLine();
+        Specialization specialization =
+                chooseSpecialization();
 
-        int age = readInt("Enter age: ");
-
-        System.out.print("Enter phone: ");
-        String phone = scanner.nextLine();
-
-        System.out.print("Enter email: ");
-        String email = scanner.nextLine();
-
-        Specialization specialization = readSpecialization();
-
-        double fee = readDouble("Enter consultation fee: ");
-
-        boolean available = readBoolean("Is doctor available? (true/false): ");
+        double fee =
+                readDouble("Consultation fee: ");
 
         Doctor doctor = new Doctor(
                 id,
@@ -203,337 +242,1142 @@ public class Main {
                 email,
                 specialization,
                 fee,
-                available
+                true
         );
 
-        try {
+        doctorService.addDoctor(doctor);
 
-            doctorService.addDoctor(doctor);
+        System.out.println(
+                "Doctor added successfully."
+        );
+    }
+
+    private static void viewDoctor() {
+
+        long id = readLong("Doctor ID: ");
+
+        Doctor doctor =
+                doctorService.getDoctorById(id);
+
+        System.out.println("\n" + doctor);
+    }
+
+    private static void viewAllDoctors() {
+
+        List<Doctor> doctors =
+                doctorService.getAllDoctors();
+
+        if (doctors.isEmpty()) {
 
             System.out.println(
-                    "Doctor added successfully."
+                    "No doctors found."
             );
 
-        } catch (DoctorNotFoundException e) {
-            System.out.println("Error: " + e.getMessage());
+            return;
         }
-        catch (IllegalArgumentException e) {
 
-            System.out.println("Error: " + e.getMessage());
+        System.out.println("\n--- DOCTORS ---");
+
+        for (Doctor doctor : doctors) {
+            System.out.println(doctor);
         }
     }
 
-    /**
-     * Displays all doctors.
-     */
-    private static void getAllDoctors() {
+    private static void searchDoctor() {
 
-        System.out.println("\n--- ALL DOCTORS ---");
+        String text =
+                readString("Search doctor: ");
 
-        List<Doctor> doctors = doctorService.getAllDoctors();
+        List<Doctor> doctors =
+                doctorService.searchDoctor(text);
 
         if (doctors.isEmpty()) {
-            System.out.println("No doctors found.");
+
+            System.out.println(
+                    "No doctors found."
+            );
+
             return;
         }
 
         for (Doctor doctor : doctors) {
-            printDoctor(doctor);
+            System.out.println(doctor);
         }
     }
 
-    /**
-     * Updates an existing Doctor.
-     */
     private static void updateDoctor() {
 
-        System.out.println("\n--- UPDATE DOCTOR ---");
+        long id =
+                readLong("Doctor ID to update: ");
 
-        long id = readLong("Enter doctor ID: ");
+        Doctor doctor =
+                doctorService.getDoctorById(id);
 
-        try {
+        System.out.println(
+                "Current doctor: " + doctor
+        );
 
-            Doctor doctor = doctorService.getDoctorById(id);
+        String name =
+                readString("New name: ");
 
-            System.out.println("Current doctor: " + doctor.getName());
+        int age =
+                readInt("New age: ");
 
-            System.out.print("Enter new name: ");
-            String name = scanner.nextLine();
+        String phone =
+                readString("New phone: ");
 
-            int age = readInt("Enter new age: ");
+        String email =
+                readString("New email: ");
 
-            System.out.print("Enter new phone: ");
-            String phone = scanner.nextLine();
+        Specialization specialization =
+                chooseSpecialization();
 
-            System.out.print("Enter new email: ");
-            String email = scanner.nextLine();
+        double fee =
+                readDouble("New consultation fee: ");
 
-            Specialization specialization = readSpecialization();
+        doctor.setName(name);
+        doctor.setAge(age);
+        doctor.setPhone(phone);
+        doctor.setEmail(email);
+        doctor.setSpecialization(specialization);
+        doctor.setConsultationFee(fee);
 
-            double fee = readDouble("Enter new consultation fee: ");
+        doctorService.updateDoctor(doctor);
 
-            boolean available = readBoolean("Is doctor available? (true/false): ");
-
-            doctor.setName(name);
-            doctor.setAge(age);
-            doctor.setPhone(phone);
-            doctor.setEmail(email);
-            doctor.setSpecialization(specialization);
-            doctor.setConsultationFee(fee);
-            doctor.setAvailable(available);
-
-            doctorService.updateDoctor(doctor);
-
-            System.out.println("Doctor updated successfully.");
-
-        } catch (RuntimeException e) {
-
-            System.out.println("Error: " + e.getMessage());
-        }
+        System.out.println(
+                "Doctor updated successfully."
+        );
     }
 
-    /**
-     * Deletes a Doctor by ID.
-     */
     private static void deleteDoctor() {
 
-        System.out.println("\n--- DELETE DOCTOR ---");
+        long id =
+                readLong("Doctor ID to delete: ");
 
-        long id = readLong("Enter doctor ID: ");
-
-        try {
-
-            doctorService.deleteDoctor(id);
-
-            System.out.println("Doctor deleted successfully.");
-
-        } catch (RuntimeException e) {
-
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Searches for a Doctor using the Doctor ID.
-     */
-    private static void searchDoctorById() {
-
-        System.out.println("\n--- SEARCH DOCTOR BY ID ---");
-
-        long id = readLong("Enter doctor ID: ");
-
-        try {
-
-            Doctor doctor = doctorService.searchDoctor(id);
-
-            printDoctor(doctor);
-
-        } catch (RuntimeException e) {
-
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Searches Doctors by name.
-     */
-    private static void searchDoctorByName() {
-
-        System.out.println("\n--- SEARCH BY NAME ---");
-
-        System.out.print("Enter name: ");
-        String name = scanner.nextLine();
-
-        try {
-
-            List<Doctor> doctors = doctorService.searchDoctor(name);
-
-            if (doctors.isEmpty()) {
-                System.out.println("No matching doctors found.");
-                return;
-            }
-
-            for (Doctor doctor : doctors) {
-                printDoctor(doctor);
-            }
-
-        } catch (IllegalArgumentException e) {
-
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Searches Doctors by specialization.
-     */
-    private static void searchBySpecialization() {
+        doctorService.deleteDoctor(id);
 
         System.out.println(
-                "\n--- SEARCH BY SPECIALIZATION ---"
+                "Doctor deleted successfully."
+        );
+    }
+
+    private static void doctorStatistics() {
+
+        System.out.println(
+                "Total doctors: " +
+                        doctorService.getAllDoctors().size()
         );
 
-        try {
+        System.out.println(
+                "Average consultation fee: ₹" +
+                        doctorService.calculateAverageConsultationFee()
+        );
 
-            Specialization specialization = readSpecialization();
+        Doctor highest =
+                doctorService.findHighestConsultationFeeDoctor();
 
-            List<Doctor> doctors = doctorService.findBySpecialization(specialization);
+        if (highest != null) {
 
-            if (doctors.isEmpty()) {
-                System.out.println("No doctors found.");
-                return;
-            }
-
-            for (Doctor doctor : doctors) {
-                printDoctor(doctor);
-            }
-
-        } catch (IllegalArgumentException e) {
-
-            System.out.println("Error: " + e.getMessage());
+            System.out.println(
+                    "Highest fee doctor: " +
+                            highest.getName() +
+                            " - ₹" +
+                            highest.getConsultationFee()
+            );
         }
     }
 
-    /**
-     * Calculates and displays the average consultation fee.
-     */
-    private static void calculateAverageFee() {
+    // =========================================================
+    // PATIENT MENU
+    // =========================================================
 
-        System.out.println(
-                "\n--- AVERAGE CONSULTATION FEE ---"
-        );
+    private static void patientMenu() {
 
-        double average = doctorService.calculateAverageConsultationFee();
+        boolean back = false;
 
-        System.out.println("Average consultation fee: ₹" + average);
+        while (!back) {
+
+            System.out.println();
+            System.out.println("------------------------------------------");
+            System.out.println("           PATIENT MANAGEMENT");
+            System.out.println("------------------------------------------");
+            System.out.println("1. Add Patient");
+            System.out.println("2. View Patient");
+            System.out.println("3. View All Patients");
+            System.out.println("4. Search Patient");
+            System.out.println("5. Update Patient");
+            System.out.println("6. Delete Patient");
+            System.out.println("0. Back");
+            System.out.println("------------------------------------------");
+
+            int choice =
+                    readInt("Enter your choice: ");
+
+            try {
+
+                switch (choice) {
+
+                    case 1:
+                        addPatient();
+                        break;
+
+                    case 2:
+                        viewPatient();
+                        break;
+
+                    case 3:
+                        viewAllPatients();
+                        break;
+
+                    case 4:
+                        searchPatient();
+                        break;
+
+                    case 5:
+                        updatePatient();
+                        break;
+
+                    case 6:
+                        deletePatient();
+                        break;
+
+                    case 0:
+                        back = true;
+                        break;
+
+                    default:
+                        System.out.println(
+                                "Invalid choice."
+                        );
+                }
+
+            } catch (Exception e) {
+
+                System.out.println(
+                        "Operation failed: " +
+                                e.getMessage()
+                );
+            }
+        }
     }
 
-    /**
-     * Finds and displays the Doctor with the highest
-     * consultation fee.
-     */
-    private static void findHighestFeeDoctor() {
+    private static void addPatient() {
 
-        System.out.println(
-                "\n--- HIGHEST CONSULTATION FEE ---"
+        System.out.println("\n--- ADD PATIENT ---");
+
+        long id =
+                readLong("Patient ID: ");
+
+        String name =
+                readString("Name: ");
+
+        int age =
+                readInt("Age: ");
+
+        String phone =
+                readString("Phone: ");
+
+        String email =
+                readString("Email: ");
+
+        String bloodGroup =
+                readString("Blood group: ");
+
+        String medicalHistory =
+                readString("Medical history: ");
+
+        Patient patient = new Patient(
+                id,
+                name,
+                age,
+                phone,
+                email,
+                bloodGroup,
+                medicalHistory
         );
 
-        Doctor doctor = doctorService.findHighestConsultationFeeDoctor();
+        patientService.addPatient(patient);
 
-        if (doctor == null) {
-            System.out.println("No doctors found.");
+        System.out.println(
+                "Patient added successfully."
+        );
+    }
+
+    private static void viewPatient() {
+
+        long id =
+                readLong("Patient ID: ");
+
+        Patient patient =
+                patientService.getPatientById(id);
+
+        System.out.println("\n" + patient);
+    }
+
+    private static void viewAllPatients() {
+
+        List<Patient> patients =
+                patientService.getAllPatients();
+
+        if (patients.isEmpty()) {
+
+            System.out.println(
+                    "No patients found."
+            );
+
             return;
         }
 
-        printDoctor(doctor);
+        System.out.println("\n--- PATIENTS ---");
+
+        for (Patient patient : patients) {
+            System.out.println(patient);
+        }
     }
 
-    /**
-     * Reads a specialization from the console.
-     *
-     * @return selected specialization
-     */
-    private static Specialization readSpecialization() {
+    private static void searchPatient() {
 
-        Specialization[] specializations = Specialization.values();
+        String text =
+                readString("Search patient: ");
 
-        System.out.println("\nSelect Specialization:");
+        List<Patient> patients =
+                patientService.searchPatients(text);
 
-        for (int i = 0; i < specializations.length; i++) {
+        if (patients.isEmpty()) {
+
             System.out.println(
-                    (i + 1) + ". " + specializations[i]
+                    "No patients found."
+            );
+
+            return;
+        }
+
+        for (Patient patient : patients) {
+            System.out.println(patient);
+        }
+    }
+
+    private static void updatePatient() {
+
+        long id =
+                readLong("Patient ID to update: ");
+
+        Patient patient =
+                patientService.getPatientById(id);
+
+        String name =
+                readString("New name: ");
+
+        int age =
+                readInt("New age: ");
+
+        String phone =
+                readString("New phone: ");
+
+        String email =
+                readString("New email: ");
+
+        String bloodGroup =
+                readString("New blood group: ");
+
+        String medicalHistory =
+                readString("New medical history: ");
+
+        patient.setName(name);
+        patient.setAge(age);
+        patient.setPhone(phone);
+        patient.setEmail(email);
+        patient.setBloodGroup(bloodGroup);
+        patient.setMedicalHistory(medicalHistory);
+
+        patientService.updatePatient(patient);
+
+        System.out.println(
+                "Patient updated successfully."
+        );
+    }
+
+    private static void deletePatient() {
+
+        long id =
+                readLong("Patient ID to delete: ");
+
+        patientService.deletePatient(id);
+
+        System.out.println(
+                "Patient deleted successfully."
+        );
+    }
+
+    // =========================================================
+    // APPOINTMENT MENU
+    // =========================================================
+
+    private static void appointmentMenu() {
+
+        boolean back = false;
+
+        while (!back) {
+
+            System.out.println();
+            System.out.println("------------------------------------------");
+            System.out.println("         APPOINTMENT MANAGEMENT");
+            System.out.println("------------------------------------------");
+            System.out.println("1. Create Appointment");
+            System.out.println("2. View Appointment");
+            System.out.println("3. View All Appointments");
+            System.out.println("4. View Doctor Appointments");
+            System.out.println("5. View Patient Appointments");
+            System.out.println("6. Confirm Appointment");
+            System.out.println("7. Cancel Appointment");
+            System.out.println("8. Update Appointment");
+            System.out.println("9. Upcoming Appointments");
+            System.out.println("10. Delete Appointment");
+            System.out.println("0. Back");
+            System.out.println("------------------------------------------");
+
+            int choice =
+                    readInt("Enter your choice: ");
+
+            try {
+
+                switch (choice) {
+
+                    case 1:
+                        createAppointment();
+                        break;
+
+                    case 2:
+                        viewAppointment();
+                        break;
+
+                    case 3:
+                        viewAllAppointments();
+                        break;
+
+                    case 4:
+                        viewDoctorAppointments();
+                        break;
+
+                    case 5:
+                        viewPatientAppointments();
+                        break;
+
+                    case 6:
+                        confirmAppointment();
+                        break;
+
+                    case 7:
+                        cancelAppointment();
+                        break;
+
+                    case 8:
+                        updateAppointment();
+                        break;
+
+                    case 9:
+                        viewUpcomingAppointments();
+                        break;
+
+                    case 10:
+                        deleteAppointment();
+                        break;
+
+                    case 0:
+                        back = true;
+                        break;
+
+                    default:
+                        System.out.println(
+                                "Invalid choice."
+                        );
+                }
+
+            } catch (Exception e) {
+
+                System.out.println(
+                        "Operation failed: " +
+                                e.getMessage()
+                );
+            }
+        }
+    }
+
+    private static void createAppointment() {
+
+        System.out.println("\n--- CREATE APPOINTMENT ---");
+
+        long doctorId =
+                readLong("Doctor ID: ");
+
+        long patientId =
+                readLong("Patient ID: ");
+
+        String dateTime =
+                readString(
+                        "Date/time (dd-MM-yyyy HH:mm): "
+                );
+
+        LocalDateTime appointmentTime =
+                DateUtil.parse(dateTime);
+
+        String reason =
+                readString("Reason: ");
+
+        Appointment appointment =
+                appointmentService.createAppointment(
+                        doctorId,
+                        patientId,
+                        appointmentTime,
+                        reason
+                );
+
+        System.out.println(
+                "Appointment created successfully."
+        );
+
+        System.out.println(appointment);
+    }
+
+    private static void viewAppointment() {
+
+        long id =
+                readLong("Appointment ID: ");
+
+        Appointment appointment =
+                appointmentService.getAppointmentById(id);
+
+        System.out.println("\n" + appointment);
+    }
+
+    private static void viewAllAppointments() {
+
+        List<Appointment> appointments =
+                appointmentService.getAllAppointments();
+
+        if (appointments.isEmpty()) {
+
+            System.out.println(
+                    "No appointments found."
+            );
+
+            return;
+        }
+
+        for (Appointment appointment :
+                appointments) {
+
+            System.out.println(appointment);
+        }
+    }
+
+    private static void viewDoctorAppointments() {
+
+        long doctorId =
+                readLong("Doctor ID: ");
+
+        List<Appointment> appointments =
+                appointmentService
+                        .getAppointmentsByDoctor(doctorId);
+
+        printAppointments(appointments);
+    }
+
+    private static void viewPatientAppointments() {
+
+        long patientId =
+                readLong("Patient ID: ");
+
+        List<Appointment> appointments =
+                appointmentService
+                        .getAppointmentsByPatient(patientId);
+
+        printAppointments(appointments);
+    }
+
+    private static void confirmAppointment() {
+
+        long id =
+                readLong("Appointment ID: ");
+
+        Appointment appointment =
+                appointmentService
+                        .confirmAppointment(id);
+
+        System.out.println(
+                "Appointment confirmed."
+        );
+
+        System.out.println(appointment);
+    }
+
+    private static void cancelAppointment() {
+
+        long id =
+                readLong("Appointment ID: ");
+
+        Appointment appointment =
+                appointmentService
+                        .cancelAppointment(id);
+
+        System.out.println(
+                "Appointment cancelled."
+        );
+
+        System.out.println(appointment);
+    }
+
+    private static void updateAppointment() {
+
+        long id =
+                readLong("Appointment ID: ");
+
+        String dateTime =
+                readString(
+                        "New date/time (dd-MM-yyyy HH:mm): "
+                );
+
+        LocalDateTime newDateTime =
+                DateUtil.parse(dateTime);
+
+        String reason =
+                readString("New reason: ");
+
+        Appointment appointment =
+                appointmentService.updateAppointment(
+                        id,
+                        newDateTime,
+                        reason
+                );
+
+        System.out.println(
+                "Appointment updated."
+        );
+
+        System.out.println(appointment);
+    }
+
+    private static void viewUpcomingAppointments() {
+
+        List<Appointment> appointments =
+                appointmentService
+                        .getUpcomingAppointments();
+
+        printAppointments(appointments);
+    }
+
+    private static void deleteAppointment() {
+
+        long id =
+                readLong("Appointment ID: ");
+
+        appointmentService.deleteAppointment(id);
+
+        System.out.println(
+                "Appointment deleted."
+        );
+    }
+
+    // =========================================================
+    // BILLING MENU
+    // =========================================================
+
+    private static void billingMenu() {
+
+        boolean back = false;
+
+        while (!back) {
+
+            System.out.println();
+            System.out.println("------------------------------------------");
+            System.out.println("            BILLING MANAGEMENT");
+            System.out.println("------------------------------------------");
+            System.out.println("1. Create Consultation Bill");
+            System.out.println("2. Create Custom Bill");
+            System.out.println("3. View Bill");
+            System.out.println("4. View All Bills");
+            System.out.println("5. View Appointment Bills");
+            System.out.println("6. Process Payment");
+            System.out.println("7. View Bill Summary");
+            System.out.println("8. View Unpaid Bills");
+            System.out.println("9. View Total Revenue");
+            System.out.println("0. Back");
+            System.out.println("------------------------------------------");
+
+            int choice =
+                    readInt("Enter your choice: ");
+
+            try {
+
+                switch (choice) {
+
+                    case 1:
+                        createConsultationBill();
+                        break;
+
+                    case 2:
+                        createCustomBill();
+                        break;
+
+                    case 3:
+                        viewBill();
+                        break;
+
+                    case 4:
+                        viewAllBills();
+                        break;
+
+                    case 5:
+                        viewAppointmentBills();
+                        break;
+
+                    case 6:
+                        processPayment();
+                        break;
+
+                    case 7:
+                        viewBillSummary();
+                        break;
+
+                    case 8:
+                        viewUnpaidBills();
+                        break;
+
+                    case 9:
+                        viewRevenue();
+                        break;
+
+                    case 0:
+                        back = true;
+                        break;
+
+                    default:
+                        System.out.println(
+                                "Invalid choice."
+                        );
+                }
+
+            } catch (Exception e) {
+
+                System.out.println(
+                        "Operation failed: " +
+                                e.getMessage()
+                );
+            }
+        }
+    }
+
+    private static void createConsultationBill() {
+
+        long appointmentId =
+                readLong("Appointment ID: ");
+
+        Bill bill =
+                billingService
+                        .createConsultationBill(
+                                appointmentId
+                        );
+
+        System.out.println(
+                "Consultation bill created."
+        );
+
+        System.out.println(bill);
+    }
+
+    private static void createCustomBill() {
+
+        long appointmentId =
+                readLong("Appointment ID: ");
+
+        BillingType type =
+                chooseBillingType();
+
+        double amount =
+                readDouble("Amount: ");
+
+        Bill bill =
+                billingService.createBill(
+                        appointmentId,
+                        type,
+                        amount
+                );
+
+        System.out.println(
+                "Bill created successfully."
+        );
+
+        System.out.println(bill);
+    }
+
+    private static void viewBill() {
+
+        long billId =
+                readLong("Bill ID: ");
+
+        Bill bill =
+                billingService.getBillById(billId);
+
+        System.out.println(bill);
+    }
+
+    private static void viewAllBills() {
+
+        List<Bill> bills =
+                billingService.getAllBills();
+
+        if (bills.isEmpty()) {
+
+            System.out.println(
+                    "No bills found."
+            );
+
+            return;
+        }
+
+        for (Bill bill : bills) {
+            System.out.println(bill);
+        }
+    }
+
+    private static void viewAppointmentBills() {
+
+        long appointmentId =
+                readLong("Appointment ID: ");
+
+        List<Bill> bills =
+                billingService
+                        .getBillsByAppointment(
+                                appointmentId
+                        );
+
+        if (bills.isEmpty()) {
+
+            System.out.println(
+                    "No bills found."
+            );
+
+            return;
+        }
+
+        for (Bill bill : bills) {
+            System.out.println(bill);
+        }
+    }
+
+    private static void processPayment() {
+
+        long billId =
+                readLong("Bill ID: ");
+
+        Bill bill =
+                billingService
+                        .processPayment(billId);
+
+        System.out.println(
+                "Payment processed successfully."
+        );
+
+        System.out.println(bill);
+    }
+
+    private static void viewBillSummary() {
+
+        long billId =
+                readLong("Bill ID: ");
+
+        BillSummary summary =
+                billingService
+                        .getBillSummary(billId);
+
+        System.out.println(
+                "\n========== BILL SUMMARY =========="
+        );
+
+        System.out.println(
+                "Bill ID       : " +
+                        summary.getBillId()
+        );
+
+        System.out.println(
+                "Appointment ID : " +
+                        summary.getAppointmentId()
+        );
+
+        System.out.println(
+                "Billing Type   : " +
+                        summary.getBillingType()
+        );
+
+        System.out.println(
+                "Base Amount    : ₹" +
+                        summary.getBaseAmount()
+        );
+
+        System.out.println(
+                "Tax            : ₹" +
+                        summary.getTaxAmount()
+        );
+
+        System.out.println(
+                "Total Amount   : ₹" +
+                        summary.getTotalAmount()
+        );
+
+        System.out.println(
+                "Paid           : " +
+                        summary.isPaid()
+        );
+
+        System.out.println(
+                "=================================="
+        );
+    }
+
+    private static void viewUnpaidBills() {
+
+        List<Bill> bills =
+                billingService.getUnpaidBills();
+
+        if (bills.isEmpty()) {
+
+            System.out.println(
+                    "No unpaid bills."
+            );
+
+            return;
+        }
+
+        for (Bill bill : bills) {
+            System.out.println(bill);
+        }
+    }
+
+    private static void viewRevenue() {
+
+        double revenue =
+                billingService.getTotalRevenue();
+
+        System.out.println(
+                "Total revenue: ₹" +
+                        revenue
+        );
+    }
+
+    // =========================================================
+    // DASHBOARD
+    // =========================================================
+
+    private static void showDashboard() {
+
+        System.out.println();
+        System.out.println("==========================================");
+        System.out.println("              MEDI TRACK");
+        System.out.println("               DASHBOARD");
+        System.out.println("==========================================");
+
+        System.out.println(
+                "Doctors       : " +
+                        doctorService.getAllDoctors().size()
+        );
+
+        System.out.println(
+                "Patients      : " +
+                        patientService.getPatientCount()
+        );
+
+        System.out.println(
+                "Appointments  : " +
+                        appointmentService.getAppointmentCount()
+        );
+
+        System.out.println(
+                "Bills         : " +
+                        billingService.getBillCount()
+        );
+
+        System.out.println(
+                "Upcoming      : " +
+                        appointmentService
+                                .getUpcomingAppointments()
+                                .size()
+        );
+
+        System.out.println(
+                "Unpaid Bills  : " +
+                        billingService
+                                .getUnpaidBills()
+                                .size()
+        );
+
+        System.out.println(
+                "Revenue       : ₹" +
+                        billingService.getTotalRevenue()
+        );
+
+        System.out.println("==========================================");
+    }
+
+    // =========================================================
+    // DISPLAY HELPERS
+    // =========================================================
+
+    private static void printAppointments(
+            List<Appointment> appointments) {
+
+        if (appointments.isEmpty()) {
+
+            System.out.println(
+                    "No appointments found."
+            );
+
+            return;
+        }
+
+        for (Appointment appointment :
+                appointments) {
+
+            System.out.println(appointment);
+        }
+    }
+
+    // =========================================================
+    // INPUT HELPERS
+    // =========================================================
+
+    private static String readString(String message) {
+
+        System.out.print(message);
+
+        return scanner.nextLine().trim();
+    }
+
+    private static int readInt(String message) {
+
+        while (true) {
+
+            try {
+
+                System.out.print(message);
+
+                return Integer.parseInt(
+                        scanner.nextLine().trim()
+                );
+
+            } catch (NumberFormatException e) {
+
+                System.out.println(
+                        "Please enter a valid number."
+                );
+            }
+        }
+    }
+
+    private static long readLong(String message) {
+
+        while (true) {
+
+            try {
+
+                System.out.print(message);
+
+                return Long.parseLong(
+                        scanner.nextLine().trim()
+                );
+
+            } catch (NumberFormatException e) {
+
+                System.out.println(
+                        "Please enter a valid number."
+                );
+            }
+        }
+    }
+
+    private static double readDouble(String message) {
+
+        while (true) {
+
+            try {
+
+                System.out.print(message);
+
+                return Double.parseDouble(
+                        scanner.nextLine().trim()
+                );
+
+            } catch (NumberFormatException e) {
+
+                System.out.println(
+                        "Please enter a valid amount."
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // ENUM HELPERS
+    // =========================================================
+
+    private static Specialization chooseSpecialization() {
+
+        Specialization[] values =
+                Specialization.values();
+
+        System.out.println("\nSelect specialization:");
+
+        for (int i = 0; i < values.length; i++) {
+
+            System.out.println(
+                    (i + 1) + ". " + values[i]
             );
         }
 
-        int choice = readInt("Enter choice: ");
+        while (true) {
 
-        if (choice < 1 || choice > specializations.length) {
+            int choice =
+                    readInt("Choice: ");
 
-            throw new IllegalArgumentException("Invalid specialization choice.");
+            if (choice >= 1 &&
+                    choice <= values.length) {
+
+                return values[choice - 1];
+            }
+
+            System.out.println(
+                    "Invalid specialization."
+            );
+        }
+    }
+
+    private static BillingType chooseBillingType() {
+
+        BillingType[] values =
+                BillingType.values();
+
+        System.out.println("\nSelect billing type:");
+
+        for (int i = 0; i < values.length; i++) {
+
+            System.out.println(
+                    (i + 1) + ". " + values[i]
+            );
         }
 
-        return specializations[choice - 1];
-    }
+        while (true) {
 
-    /**
-     * Displays Doctor information.
-     *
-     * @param doctor doctor to display
-     */
-    private static void printDoctor(Doctor doctor) {
+            int choice =
+                    readInt("Choice: ");
 
-        System.out.println("-----------------------------");
-        System.out.println("ID: " + doctor.getId());
-        System.out.println("Name: " + doctor.getName());
-        System.out.println("Age: " + doctor.getAge());
-        System.out.println("Phone: " + doctor.getPhone());
-        System.out.println("Email: " + doctor.getEmail());
-        System.out.println("Specialization: " + doctor.getSpecialization());
-        System.out.println("Consultation Fee: ₹" + doctor.getConsultationFee());
-        System.out.println("Available: " + doctor.isAvailable());
-        System.out.println("-----------------------------");
-    }
+            if (choice >= 1 &&
+                    choice <= values.length) {
 
-    /**
-     * Reads an integer from the console.
-     *
-     * @param message prompt displayed to the user
-     * @return entered integer
-     */
-    private static int readInt(String message) {
+                return values[choice - 1];
+            }
 
-        System.out.print(message);
-
-        int value = scanner.nextInt();
-        scanner.nextLine();
-
-        return value;
-    }
-
-    /**
-     * Reads a long value from the console.
-     *
-     * @param message prompt displayed to the user
-     * @return entered long value
-     */
-    private static long readLong(String message) {
-
-        System.out.print(message);
-
-        long value = scanner.nextLong();
-        scanner.nextLine();
-
-        return value;
-    }
-
-    /**
-     * Reads a double value from the console.
-     *
-     * @param message prompt displayed to the user
-     * @return entered double value
-     */
-    private static double readDouble(String message) {
-
-        System.out.print(message);
-
-        double value = scanner.nextDouble();
-        scanner.nextLine();
-
-        return value;
-    }
-
-    /**
-     * Reads a boolean value from the console.
-     *
-     * @param message prompt displayed to the user
-     * @return entered boolean value
-     */
-    private static boolean readBoolean(String message) {
-
-        System.out.print(message);
-
-        boolean value = scanner.nextBoolean();
-        scanner.nextLine();
-
-        return value;
+            System.out.println(
+                    "Invalid billing type."
+            );
+        }
     }
 }

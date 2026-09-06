@@ -1,4 +1,8 @@
 package com.airtribe.meditrack.interfaces;
 
-public class Payable {
+public interface Payable {
+
+    double calculateAmount();
+
+    void processPayment();
 }
